@@ -18,20 +18,11 @@
  */
 
 plugins {
-    id("scala")
-    id("io.gatling.gradle") version "3.13.4.1"
-    id("com.diffplug.spotless")
+  id("polaris-scala")
+  id("io.gatling.gradle") version "3.13.4.1"
+  id("com.diffplug.spotless")
 }
 
-dependencies {
-    gatling("com.typesafe.play:play-json_2.13:2.9.4")
-}
+dependencies { gatling("com.typesafe.play:play-json_2.13:2.9.4") }
 
 description = "Polaris Iceberg REST API performance tests"
-
-spotless {
-    scala {
-        // Use scalafmt for Scala formatting
-        scalafmt("3.9.3").configFile("../.scalafmt.conf")
-    }
-}

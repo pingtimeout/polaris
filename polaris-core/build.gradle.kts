@@ -20,6 +20,7 @@
 plugins {
   id("polaris-client")
   alias(libs.plugins.jandex)
+  alias(libs.plugins.jcstress)
 }
 
 dependencies {
@@ -108,3 +109,5 @@ dependencies {
 }
 
 tasks.named("javadoc") { dependsOn("jandex") }
+tasks.named("jcstressJar") { dependsOn("jandex") }
+tasks.named("compileJcstressJava") { dependsOn("jandex") }

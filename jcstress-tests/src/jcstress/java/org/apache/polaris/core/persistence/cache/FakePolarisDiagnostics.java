@@ -16,32 +16,37 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 package org.apache.polaris.core.persistence.cache;
 
-public class TwoFields {
+import org.apache.polaris.core.PolarisDiagnostics;
 
-    long x;
-    long y;
+public class FakePolarisDiagnostics implements PolarisDiagnostics {
+  @Override
+  public RuntimeException fail(String signature, String extraInfoFormat, Object... extraInfoArgs) {
+    return null;
+  }
 
-    public TwoFields(int x, long y) {
-        this.x = x;
-        this.y = y;
-    }
+  @Override
+  public RuntimeException fail(
+      String signature, Throwable cause, String extraInfoFormat, Object... extraInfoArgs) {
+    return null;
+  }
 
-    public long getX() {
-        return x;
-    }
+  @Override
+  public <T> T checkNotNull(T reference, String signature) {
+    return null;
+  }
 
-    public void setX(long x) {
-        this.x = x;
-    }
+  @Override
+  public <T> T checkNotNull(
+      T reference, String signature, String extraInfoFormat, Object... extraInfoArgs) {
+    return null;
+  }
 
-    public long getY() {
-        return y;
-    }
+  @Override
+  public void check(boolean expression, String signature) {}
 
-    public void setY(long y) {
-        this.y = y;
-    }
+  @Override
+  public void check(
+      boolean expression, String signature, String extraInfoFormat, Object... extraInfoArgs) {}
 }

@@ -18,6 +18,11 @@
  */
 
 plugins {
-    id("polaris-server")
-    alias(libs.plugins.jcstress)
+  id("polaris-server")
+  alias(libs.plugins.jcstress)
+}
+
+dependencies {
+  jcstress(project(":polaris-core"))
+  jcstress(libs.mockito.core)
 }

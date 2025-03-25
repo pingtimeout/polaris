@@ -20,6 +20,11 @@ package org.apache.polaris.core.persistence.cache;
 
 import org.apache.polaris.core.PolarisDiagnostics;
 
+/**
+ * Fake implementation of {@link PolarisDiagnostics} for testing purposes. This implementation does
+ * nothing. Any actual use of this class will likely throw a {@link NullPointerException} as all
+ * methods return null.
+ */
 public class FakePolarisDiagnostics implements PolarisDiagnostics {
   @Override
   public RuntimeException fail(String signature, String extraInfoFormat, Object... extraInfoArgs) {

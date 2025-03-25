@@ -25,6 +25,11 @@ import org.apache.polaris.core.PolarisCallContext;
 import org.apache.polaris.core.entity.*;
 import org.apache.polaris.core.persistence.BasePersistence;
 
+/**
+ * Fake implementation of {@link BasePersistence} for testing purposes. This implementation does
+ * nothing. Any actual use of this class will likely throw a {@link NullPointerException} as all
+ * methods return null.
+ */
 public class FakeBasePersistence implements BasePersistence {
   @Override
   public long generateNewId(PolarisCallContext callCtx) {

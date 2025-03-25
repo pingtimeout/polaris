@@ -30,7 +30,7 @@ public class EntityCacheGetByIdTest {
 
   @JCStressTest
   @Description(
-      "Tests getOrLoadById is thread-safe.  In this test, to actors are calling getOrLoadById "
+      "Tests getOrLoadById is thread-safe.  In this test, two actors are calling getOrLoadById "
           + "twice on the same key.  Each actor returns the version of the entity returned by the "
           + "two calls to getOrLoadById.  Expected behaviour is that the two actors get the same "
           + "object twice, or for an object to be updated to a newer version between reads.  "
@@ -88,7 +88,7 @@ public class EntityCacheGetByIdTest {
 
   @JCStressTest
   @Description(
-      "Tests getOrLoadById is thread-safe.  In this test, to actors are calling getOrLoadById "
+      "Tests getOrLoadById is thread-safe.  In this test, two actors are calling getOrLoadById "
           + "twice on the same key.  The updates received by the actors are not checked as part of "
           + "this test.  Instead, an arbiter runs after the actors have performed their calls and "
           + "checks the version of the entity that is in the cache.  Expected behaviour is that "

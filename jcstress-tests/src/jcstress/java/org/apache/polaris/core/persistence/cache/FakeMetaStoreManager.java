@@ -216,7 +216,7 @@ public class FakeMetaStoreManager implements PolarisMetaStoreManager {
       PolarisEntityType entityType,
       long entityCatalogId,
       long entityId) {
-    return null;
+    return nextResult();
   }
 
   @Override

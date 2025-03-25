@@ -24,5 +24,4 @@ plugins {
 
 dependencies {
   jcstress(project(":polaris-core"))
-  jcstress(libs.mockito.core)
 }

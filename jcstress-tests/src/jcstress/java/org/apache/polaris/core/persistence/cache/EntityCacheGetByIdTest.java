@@ -26,17 +26,14 @@ import org.openjdk.jcstress.annotations.*;
 import org.openjdk.jcstress.infra.results.II_Result;
 import org.openjdk.jcstress.infra.results.I_Result;
 
-public class EntityCacheGetByNameTest {
-
-  /** The cache key associated with the catalog that is returned by the fake meta store manager. */
-  private static final EntityCacheByNameKey KEY = new EntityCacheByNameKey(CATALOG, "test");
+public class EntityCacheGetByIdTest {
 
   @JCStressTest
   @Description(
-      "Tests getOrLoadByName is thread-safe.  In this test, to actors are calling getOrLoadByName "
+      "Tests getOrLoadById is thread-safe.  In this test, to actors are calling getOrLoadById "
           + "twice on the same key.  Each actor returns the version of the entity returned by the "
-          + "two calls to getOrLoadByName.  Expected behaviour is that the two actors get the "
-          + "same object twice or for an object to be updated to a newer version between reads.  "
+          + "two calls to getOrLoadById.  Expected behaviour is that the two actors get the same "
+          + "object twice, or for an object to be updated to a newer version between reads.  "
           + "But the cache should never go backward and server a stale version after a newer one "
           + "has been observed as it is not allowed by `cacheNewEntry`.")
   @Outcome.Outcomes({
@@ -60,13 +57,13 @@ public class EntityCacheGetByNameTest {
     public void actor1(II_Result result) {
       result.r1 =
           entityCache
-              .getOrLoadEntityByName(context, KEY)
+              .getOrLoadEntityById(context, 0L, FakeMetaStoreManager.CATALOG_ID, CATALOG)
               .getCacheEntry()
               .getEntity()
               .getEntityVersion();
       result.r2 =
           entityCache
-              .getOrLoadEntityByName(context, KEY)
+              .getOrLoadEntityById(context, 0L, FakeMetaStoreManager.CATALOG_ID, CATALOG)
               .getCacheEntry()
               .getEntity()
               .getEntityVersion();
@@ -76,13 +73,13 @@ public class EntityCacheGetByNameTest {
     public void actor2(II_Result result) {
       result.r1 =
           entityCache
-              .getOrLoadEntityByName(context, KEY)
+              .getOrLoadEntityById(context, 0L, FakeMetaStoreManager.CATALOG_ID, CATALOG)
               .getCacheEntry()
               .getEntity()
               .getEntityVersion();
       result.r2 =
           entityCache
-              .getOrLoadEntityByName(context, KEY)
+              .getOrLoadEntityById(context, 0L, FakeMetaStoreManager.CATALOG_ID, CATALOG)
               .getCacheEntry()
               .getEntity()
               .getEntityVersion();
@@ -91,7 +88,7 @@ public class EntityCacheGetByNameTest {
 
   @JCStressTest
   @Description(
-      "Tests getOrLoadByName is thread-safe.  In this test, to actors are calling getOrLoadByName "
+      "Tests getOrLoadById is thread-safe.  In this test, to actors are calling getOrLoadById "
           + "twice on the same key.  The updates received by the actors are not checked as part of "
           + "this test.  Instead, an arbiter runs after the actors have performed their calls and "
           + "checks the version of the entity that is in the cache.  Expected behaviour is that "
@@ -116,12 +113,12 @@ public class EntityCacheGetByNameTest {
     @Actor
     public void actor1() {
       entityCache
-          .getOrLoadEntityByName(context, KEY)
+          .getOrLoadEntityById(context, 0L, FakeMetaStoreManager.CATALOG_ID, CATALOG)
           .getCacheEntry()
           .getEntity()
           .getEntityVersion();
       entityCache
-          .getOrLoadEntityByName(context, KEY)
+          .getOrLoadEntityById(context, 0L, FakeMetaStoreManager.CATALOG_ID, CATALOG)
           .getCacheEntry()
           .getEntity()
           .getEntityVersion();
@@ -130,12 +127,12 @@ public class EntityCacheGetByNameTest {
     @Actor
     public void actor2() {
       entityCache
-          .getOrLoadEntityByName(context, KEY)
+          .getOrLoadEntityById(context, 0L, FakeMetaStoreManager.CATALOG_ID, CATALOG)
           .getCacheEntry()
           .getEntity()
           .getEntityVersion();
       entityCache
-          .getOrLoadEntityByName(context, KEY)
+          .getOrLoadEntityById(context, 0L, FakeMetaStoreManager.CATALOG_ID, CATALOG)
           .getCacheEntry()
           .getEntity()
           .getEntityVersion();
@@ -145,7 +142,7 @@ public class EntityCacheGetByNameTest {
     public void arbiter(I_Result result) {
       result.r1 =
           entityCache
-              .getOrLoadEntityByName(context, KEY)
+              .getOrLoadEntityById(context, 0L, FakeMetaStoreManager.CATALOG_ID, CATALOG)
               .getCacheEntry()
               .getEntity()
               .getEntityVersion();

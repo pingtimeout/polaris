@@ -18,9 +18,12 @@
  */
 package org.apache.polaris.core.persistence.cache;
 
+import static java.util.Collections.emptyList;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import org.apache.polaris.core.PolarisCallContext;
 import org.apache.polaris.core.entity.*;
@@ -28,15 +31,48 @@ import org.apache.polaris.core.persistence.PolarisMetaStoreManager;
 import org.apache.polaris.core.persistence.dao.entity.*;
 import org.apache.polaris.core.storage.PolarisStorageActions;
 
+/**
+ * Build a fake meta store manager that returns a single catalog entity. Every time the catalog is
+ * returned, an incremented entity version id is used. this is in order to disambiguate the entity
+ * returned by the cache and verify whether the cache is thread safe.
+ *
+ * <p>Think of it as a poor-man's Mockito. It is not a real mock, but it is good enough for this
+ * test. More importantly, it is a lot faster to instantiate than Mockito. It allows the stress test
+ * to run up to 100x more iterations in the same amount of time.
+ *
+ * <p>The only implemented methods are `loadResolvedEntityById` and `loadResolvedEntityByName`. Any
+ * time they are invoked, regardless of their parameters, the same catalog is returned but with an
+ * increased entity version id.
+ */
 public class FakeMetaStoreManager implements PolarisMetaStoreManager {
-  private final Supplier<ResolvedEntityResult> results;
+  public static final int CATALOG_ID = 42;
+  private final Supplier<ResolvedEntityResult> catalogSupplier;
 
-  public FakeMetaStoreManager(Supplier<ResolvedEntityResult> results) {
-    this.results = results;
+  public FakeMetaStoreManager() {
+    final AtomicInteger versionCounter = new AtomicInteger(1);
+    this.catalogSupplier =
+        () -> {
+          int version = versionCounter.getAndIncrement();
+          CatalogEntity catalog =
+              new CatalogEntity.Builder()
+                  .setId(CATALOG_ID)
+                  .setInternalProperties(Map.of())
+                  .setProperties(Map.of())
+                  .setName("test")
+                  .setParentId(PolarisEntityConstants.getRootEntityId())
+                  .setEntityVersion(version)
+                  .build();
+          return new ResolvedEntityResult(catalog, version, emptyList());
+        };
   }
 
+  /**
+   * Utility method that ensures that catalogs creation is thread safe.
+   *
+   * @return a catalog entity with an incremented version id
+   */
   private synchronized ResolvedEntityResult nextResult() {
-    return results.get();
+    return catalogSupplier.get();
   }
 
   @Override

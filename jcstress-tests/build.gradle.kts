@@ -22,6 +22,4 @@ plugins {
   alias(libs.plugins.jcstress)
 }
 
-dependencies {
-  jcstress(project(":polaris-core"))
-}
+dependencies { jcstress(project(":polaris-core")) }

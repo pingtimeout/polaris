@@ -119,6 +119,7 @@ function check_github_checks_passed() {
     print_error "Failed to determine GitHub repository information"
     return 1
   }
+  print_info "Repository: ${repo_info}"
 
   local num_invalid_checks
   local num_invalid_checks_retrieval_command="curl -s -H \"Authorization: Bearer ${GITHUB_TOKEN}\" -H \"Accept: application/vnd.github+json\" -H \"X-GitHub-Api-Version: 2022-11-28\" https://api.github.com/repos/${repo_info}/commits/${commit_sha}/check-runs | jq -r '[.check_runs[].conclusion | select(. != \"success\" and . != \"skipped\")] | length'"
@@ -131,6 +132,8 @@ function check_github_checks_passed() {
   fi
 
   if [[ $? -ne 0 ]]; then
+    print_info "Failed to check GitHub checks for commit ${commit_sha}. Executed: ${num_invalid_checks_retrieval_command}"
+    print_info "Number of failed or in-progress checks: ${num_invalid_checks}"
     print_error "Failed to fetch GitHub check runs for commit ${commit_sha}"
     return 1
   fi

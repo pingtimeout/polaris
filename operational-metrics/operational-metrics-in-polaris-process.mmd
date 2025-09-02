@@ -1,0 +1,37 @@
+graph TD
+    QE[⚙️ Query Engine]
+    TMS[⚙️ TMS]
+    
+    subgraph Polaris ["Polaris"]
+        subgraph Current ["Current"]
+            API[API]
+            Logic[Logic]
+            Events[Events]
+            Metrics["Metrics Logic"]
+        end
+        MS[(MetaStore)]
+    end
+    
+    BS[(Block Storage)]
+    
+    QE --> API
+    TMS --> API
+    API --> Logic
+    API --> Metrics
+    Logic --> MS
+    Logic --> Events
+    Logic --> BS
+    Events --> MS
+    Events --> Metrics
+    Metrics --> MS
+    
+    style Polaris stroke-dasharray: 5 5
+    style Current stroke:#666,stroke-width:2px
+    style QE fill:#e1f5fe
+    style TMS fill:#e1f5fe
+    style API fill:#f3e5f5
+    style Logic fill:#e8f5e8
+    style Events fill:#fff3e0
+    style Metrics fill:#fce4ec
+    style MS fill:#ffebee
+    style BS fill:#f1f8e9

@@ -1,37 +1,39 @@
 graph TD
-    QE[⚙️ Query Engine]
-    TMS[⚙️ TMS]
     
-    subgraph Polaris ["Polaris"]
-        subgraph Current ["Current"]
-            API[API]
-            Logic[Logic]
-            Events[Events]
-            Metrics["Metrics Logic"]
-        end
-        MS[(MetaStore)]
+    subgraph Clients[" "]
+        QE[⚙️<br>Query<br>Engine]
+        ExternalServices[⚙️<br>External<br>Services]
     end
-    
-    BS[(Block Storage)]
-    
-    QE --> API
-    TMS --> API
-    API --> Logic
-    API --> Metrics
-    Logic --> MS
-    Logic --> Events
-    Logic --> BS
-    Events --> MS
-    Events --> Metrics
-    Metrics --> MS
+
+    subgraph Polaris ["Polaris"]
+        subgraph Core ["Core"]
+            RBAC[RBAC]
+        end
+        subgraph OMS ["Operational Metrics System"]
+            Registry[Registry]
+            MetricsAPI[API]
+            SPI["SPI"]
+        end
+    end
+
+    subgraph Other[" "]
+        MetricsDb[(Metrics<br>Database)]
+    end
+
+    QE -->|Pushes new<br>metrics| MetricsAPI
+    QE --> |Reads supported<br>metrics|Registry
+    ExternalServices --> |Reads supported<br>metrics|Registry
+    ExternalServices -->|Fetches<br>metrics| MetricsAPI
+    MetricsAPI --> SPI
+    MetricsAPI --> |Checks<br>permission| RBAC
+    SPI --> MetricsDb
     
     style Polaris stroke-dasharray: 5 5
-    style Current stroke:#666,stroke-width:2px
+    style Clients fill:#ffffff,stroke:#ffffff
+    style Other fill:#ffffff,stroke:#ffffff
+
+    style OMS stroke:#666,stroke-width:2px
     style QE fill:#e1f5fe
-    style TMS fill:#e1f5fe
-    style API fill:#f3e5f5
-    style Logic fill:#e8f5e8
-    style Events fill:#fff3e0
-    style Metrics fill:#fce4ec
-    style MS fill:#ffebee
-    style BS fill:#f1f8e9
+    style ExternalServices fill:#e1f5fe
+    style MetricsAPI fill:#f3e5f5
+

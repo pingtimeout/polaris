@@ -1,37 +1,49 @@
 graph TD
     QE[⚙️ Query Engine]
     TMS[⚙️ TMS]
-    
+
     subgraph Polaris ["Polaris"]
-        subgraph Current ["Current"]
+        subgraph Runtime ["Current"]
             API[API]
             Logic[Logic]
             Events[Events]
-            Metrics["Metrics Logic"]
+            MetricsListener["Metrics Listener"]
         end
         MS[(MetaStore)]
+    subgraph OpMetrics ["Operational Metrics"]
+        MetricsAPI[API]
+        Metrics["Metrics Logic"]
     end
-    
+
+    end
+
     BS[(Block Storage)]
-    
+
     QE --> API
+    QE --> MetricsAPI
     TMS --> API
+    TMS --> MetricsAPI
     API --> Logic
-    API --> Metrics
     Logic --> MS
     Logic --> Events
     Logic --> BS
     Events --> MS
-    Events --> Metrics
+    Events --> MetricsListener
+    MetricsListener --> MetricsAPI
+    MetricsAPI --> Metrics
     Metrics --> MS
-    
+    Metrics --> BS
+
     style Polaris stroke-dasharray: 5 5
-    style Current stroke:#666,stroke-width:2px
+    style Runtime stroke:#666,stroke-width:2px
+    style OpMetrics stroke:#666,stroke-width:2px
     style QE fill:#e1f5fe
     style TMS fill:#e1f5fe
     style API fill:#f3e5f5
     style Logic fill:#e8f5e8
     style Events fill:#fff3e0
+    style MetricsListener fill:#e3f2fd
+    style MetricsAPI fill:#f3e5f5
     style Metrics fill:#fce4ec
     style MS fill:#ffebee
     style BS fill:#f1f8e9

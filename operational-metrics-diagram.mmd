@@ -1,0 +1,45 @@
+graph TD
+    
+    subgraph Clients[" "]
+        QE[⚙️<br>Query<br>Engine]
+        ExternalServices[⚙️<br>External<br>Services]
+    end
+
+    subgraph Polaris ["Polaris"]
+        subgraph Core ["Core"]
+            IRC[Iceberg REST<br>Catalog]
+            RBAC[RBAC]
+            IRC -->|Checks<br>permission| RBAC
+        end
+        subgraph OMS ["Operational Metrics System"]
+            MetricsAPI[API]
+            Registry[Registry]
+            MetricsLogic[Metric Logic]
+            SPI["SPI"]
+            MetricsAPI --> MetricsLogic
+            MetricsAPI --> Registry
+            MetricsLogic --> SPI
+        end
+    end
+
+    subgraph Other[" "]
+        MetricsDb[(Metrics<br>Database)]
+    end
+
+    QE -->|Reads supported metrics<br>+<br>Pushes new metrics| MetricsAPI
+    QE -->|Commits| IRC
+    IRC -->|Forward<br>Snapshot<br>Summary| MetricsLogic
+    ExternalServices -->|Reads supported metrics<br>+<br>Fetches metrics| MetricsAPI
+    MetricsAPI --> |Checks<br>permission| RBAC
+    SPI --> MetricsDb
+    
+    style Polaris stroke-dasharray: 5 5
+    style Clients fill:#ffffff,stroke:#ffffff
+    style Other fill:#ffffff,stroke:#ffffff
+
+    style OMS stroke:#666,stroke-width:2px
+    style QE fill:#e1f5fe
+    style ExternalServices fill:#e1f5fe
+    style MetricsAPI fill:#f3e5f5
+
+%% https://github.com/apache/iceberg/blob/96a588038a8029cf2d5cf3487682d1ecdce63275/core/src/main/java/org/apache/iceberg/SnapshotSummary.java#L31-L31

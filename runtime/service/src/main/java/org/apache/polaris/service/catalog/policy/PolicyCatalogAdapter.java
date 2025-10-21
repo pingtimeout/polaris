@@ -33,10 +33,10 @@ import org.apache.polaris.core.config.FeatureConfiguration;
 import org.apache.polaris.core.config.RealmConfig;
 import org.apache.polaris.core.context.CallContext;
 import org.apache.polaris.core.context.RealmContext;
+import org.apache.polaris.core.credentials.PolarisCredentialManager;
 import org.apache.polaris.core.persistence.PolarisMetaStoreManager;
 import org.apache.polaris.core.persistence.resolver.ResolutionManifestFactory;
 import org.apache.polaris.core.policy.PolicyType;
-import org.apache.polaris.core.secrets.UserSecretsManager;
 import org.apache.polaris.service.catalog.CatalogPrefixParser;
 import org.apache.polaris.service.catalog.api.PolarisCatalogPolicyApiService;
 import org.apache.polaris.service.catalog.common.CatalogAdapter;
@@ -63,7 +63,7 @@ public class PolicyCatalogAdapter implements PolarisCatalogPolicyApiService, Cat
   private final PolarisMetaStoreManager metaStoreManager;
   private final PolarisAuthorizer polarisAuthorizer;
   private final CatalogPrefixParser prefixParser;
-  private final UserSecretsManager userSecretsManager;
+  private final PolarisCredentialManager polarisCredentialManager;
   private final Instance<ExternalCatalogFactory> externalCatalogFactories;
 
   @Inject
@@ -75,7 +75,7 @@ public class PolicyCatalogAdapter implements PolarisCatalogPolicyApiService, Cat
       PolarisMetaStoreManager metaStoreManager,
       PolarisAuthorizer polarisAuthorizer,
       CatalogPrefixParser prefixParser,
-      UserSecretsManager userSecretsManager,
+      PolarisCredentialManager polarisCredentialManager,
       @Any Instance<ExternalCatalogFactory> externalCatalogFactories) {
     this.diagnostics = diagnostics;
     this.realmContext = realmContext;
@@ -85,7 +85,7 @@ public class PolicyCatalogAdapter implements PolarisCatalogPolicyApiService, Cat
     this.metaStoreManager = metaStoreManager;
     this.polarisAuthorizer = polarisAuthorizer;
     this.prefixParser = prefixParser;
-    this.userSecretsManager = userSecretsManager;
+    this.polarisCredentialManager = polarisCredentialManager;
     this.externalCatalogFactories = externalCatalogFactories;
   }
 
@@ -102,7 +102,7 @@ public class PolicyCatalogAdapter implements PolarisCatalogPolicyApiService, Cat
         securityContext,
         prefixParser.prefixToCatalogName(realmContext, prefix),
         polarisAuthorizer,
-        userSecretsManager,
+        polarisCredentialManager,
         externalCatalogFactories);
   }
 

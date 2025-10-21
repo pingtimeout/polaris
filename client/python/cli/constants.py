@@ -88,6 +88,7 @@ class Commands:
     PRIVILEGES = "privileges"
     NAMESPACES = "namespaces"
     PROFILES = "profiles"
+    POLICIES = "policies"
 
 
 class Subcommands:
@@ -109,6 +110,9 @@ class Subcommands:
     GRANT = "grant"
     REVOKE = "revoke"
     ACCESS = "access"
+    RESET = "reset"
+    ATTACH = "attach"
+    DETACH = "detach"
 
 
 class Actions:
@@ -155,6 +159,8 @@ class Arguments:
     VIEW = "view"
     CASCADE = "cascade"
     CLIENT_SECRET = "client_secret"
+    NEW_CLIENT_ID = "new_client_id"
+    NEW_CLIENT_SECRET = "new_client_secret"
     ACCESS_TOKEN = "access_token"
     HOST = "host"
     PORT = "port"
@@ -186,6 +192,18 @@ class Arguments:
     CATALOG_EXTERNAL_ID = "catalog_external_id"
     CATALOG_SIGNING_REGION = "catalog_signing_region"
     CATALOG_SIGNING_NAME = "catalog_signing_name"
+    POLICY = "policy"
+    POLICY_FILE = "policy_file"
+    POLICY_TYPE = "policy_type"
+    POLICY_DESCRIPTION = "policy_description"
+    TARGET_NAME = "target_name"
+    PARAMETERS = "parameters"
+    DETACH_ALL = "detach_all"
+    APPLICABLE = "applicable"
+    ATTACHMENT_TYPE = "attachment_type"
+    ATTACHMENT_PATH = "attachment_path"
+    REALM = "realm"
+    HEADER = "header"
 
 
 class Hints:
@@ -224,7 +242,7 @@ class Hints:
                 "Multiple locations can be provided by specifying this option more than once."
             )
 
-            ROLE_ARN = "(Only for S3) A role ARN to use when connecting to S3"
+            ROLE_ARN = "(Only for AWS S3) A role ARN to use when connecting to S3"
             EXTERNAL_ID = "(Only for S3) The external ID to use when connecting to S3"
             REGION = "(Only for S3) The region to use when connecting to S3"
             USER_ARN = "(Only for S3) A user ARN to use when connecting to S3"
@@ -317,6 +335,10 @@ class Hints:
         class Revoke:
             PRINCIPAL_ROLE = "A principal role to revoke from this principal"
 
+        class Reset:
+            CLIENT_ID = "The new client ID for the principal"
+            CLIENT_SECRET = "The new client secret for the principal"
+
     class PrincipalRoles:
         PRINCIPAL_ROLE = "The name of a principal role"
         LIST = (
@@ -364,11 +386,26 @@ class Hints:
         LOCATION = "If specified, the location at which to store the namespace and entities inside it"
         PARENT = "If specified, list namespaces inside this parent namespace"
 
+    class Policies:
+        POLICY = "The name of a policy"
+        POLICY_FILE = "The path to a JSON file containing the policy definition"
+        POLICY_TYPE = "The type of the policy, e.g., 'system.data-compaction'"
+        POLICY_DESCRIPTION = "An optional description for the policy."
+        TARGET_NAME = "The name of the target entity (e.g., table name, namespace name)."
+        PARAMETERS = "Optional key-value pairs for the attachment/detachment, e.g., key=value. Can be specified multiple times."
+        DETACH_ALL = "When set to true, the policy will be deleted along with all its attached mappings."
+        APPLICABLE = "When set, lists policies applicable to the target entity (considering inheritance) instead of policies defined directly in the target."
+        ATTACHMENT_TYPE = "The type of entity to attach the policy to, e.g., 'catalog', 'namespace', or table-like."
+        ATTACHMENT_PATH = "The path of the entity to attach the policy to, e.g., 'ns1.tb1'. Not required for catalog-level attachment."
+
 
 UNIT_SEPARATOR = chr(0x1F)
 CLIENT_ID_ENV = "CLIENT_ID"
 CLIENT_SECRET_ENV = "CLIENT_SECRET"
 CLIENT_PROFILE_ENV = "CLIENT_PROFILE"
+REALM_ENV = "REALM"
+HEADER_ENV = "HEADER"
+DEFAULT_HEADER = "Polaris-Realm"
 DEFAULT_HOSTNAME = "localhost"
 DEFAULT_PORT = 8181
 CONFIG_DIR = (os.environ.get("POLARIS_HOME") or "").strip() or os.path.expanduser("~/.polaris")

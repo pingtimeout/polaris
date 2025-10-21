@@ -133,7 +133,8 @@ dependencies {
 
   testImplementation("io.rest-assured:rest-assured")
 
-  testImplementation(libs.localstack)
+  testImplementation(platform(libs.testcontainers.bom))
+  testImplementation("org.testcontainers:testcontainers-localstack")
 
   testImplementation(project(":polaris-runtime-test-common"))
   testImplementation(project(":polaris-container-spec-helper"))
@@ -187,7 +188,6 @@ dependencies {
 tasks.named("javadoc") { dependsOn("jandex") }
 
 tasks.withType(Test::class.java).configureEach {
-  forkEvery = 1
   if (System.getenv("AWS_REGION") == null) {
     environment("AWS_REGION", "us-west-2")
   }
@@ -198,15 +198,6 @@ tasks.withType(Test::class.java).configureEach {
   // Need to allow a java security manager after Java 21, for Subject.getSubject to work
   // "getSubject is supported only if a security manager is allowed".
   systemProperty("java.security.manager", "allow")
-}
-
-tasks.named<Test>("test").configure {
-  maxParallelForks = 4
-  // enlarge the max heap size to avoid out of memory error
-  maxHeapSize = "4g"
-  // Silence the 'OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader
-  // classes because bootstrap classpath has been appended' warning from OpenJDK.
-  jvmArgs("-Xshare:off")
 }
 
 listOf("intTest", "cloudTest")

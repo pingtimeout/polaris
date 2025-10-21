@@ -47,7 +47,7 @@ PACKAGE_NAME_POLARIS_MANAGEMENT = (
     "--additional-properties=packageName=polaris.management"
 )
 PACKAGE_NAME_POLARIS_CATALOG = "--additional-properties=packageName=polaris.catalog"
-PYTHON_VERSION = "--additional-properties=pythonVersion=3.9"
+PYTHON_VERSION = "--additional-properties=pythonVersion=3.10"
 
 # Cleanup
 KEEP_TEST_FILES = [
@@ -139,7 +139,7 @@ def generate_polaris_management_client() -> None:
             "-g",
             "python",
             "-o",
-            CLIENT_DIR,
+            str(CLIENT_DIR),
             PACKAGE_NAME_POLARIS_MANAGEMENT,
             "--additional-properties=apiNamePrefix=polaris",
             PYTHON_VERSION,
@@ -164,7 +164,7 @@ def generate_polaris_catalog_client() -> None:
             "-g",
             "python",
             "-o",
-            CLIENT_DIR,
+            str(CLIENT_DIR),
             PACKAGE_NAME_POLARIS_CATALOG,
             "--additional-properties=apiNameSuffix=",
             PYTHON_VERSION,
@@ -189,7 +189,7 @@ def generate_iceberg_catalog_client() -> None:
             "-g",
             "python",
             "-o",
-            CLIENT_DIR,
+            str(CLIENT_DIR),
             PACKAGE_NAME_POLARIS_CATALOG,
             "--additional-properties=apiNameSuffix=",
             "--additional-properties=apiNamePrefix=Iceberg",

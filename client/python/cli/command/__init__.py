@@ -40,6 +40,7 @@ class Command(ABC):
         set_properties = Parser.parse_properties(options_get(Arguments.SET_PROPERTY))
         remove_properties = options_get(Arguments.REMOVE_PROPERTY)
         catalog_client_scopes = options_get(Arguments.CATALOG_CLIENT_SCOPE)
+        parameters = Parser.parse_properties(options_get(Arguments.PARAMETERS)),
 
         command = None
         if options.command == Commands.CATALOGS:
@@ -99,6 +100,8 @@ class Command(ABC):
                 remove_properties=[]
                 if remove_properties is None
                 else remove_properties,
+                new_client_id=options_get(Arguments.NEW_CLIENT_ID),
+                new_client_secret=options_get(Arguments.NEW_CLIENT_SECRET),
             )
         elif options.command == Commands.PRINCIPAL_ROLES:
             from cli.command.principal_roles import PrincipalRolesCommand
@@ -167,6 +170,25 @@ class Command(ABC):
             command = ProfilesCommand(
                 subcommand, profile_name=options_get(Arguments.PROFILE)
             )
+        elif options.command == Commands.POLICIES:
+            from cli.command.policies import PoliciesCommand
+
+            subcommand = options_get(f"{Commands.POLICIES}_subcommand")
+            command = PoliciesCommand(
+                subcommand,
+                catalog_name=options_get(Arguments.CATALOG),
+                namespace=options_get(Arguments.NAMESPACE),
+                policy_name=options_get(Arguments.POLICY),
+                policy_file=options_get(Arguments.POLICY_FILE),
+                policy_type=options_get(Arguments.POLICY_TYPE),
+                policy_description=options_get(Arguments.POLICY_DESCRIPTION),
+                target_name=options_get(Arguments.TARGET_NAME),
+                parameters={} if parameters is None else parameters,
+                detach_all=options_get(Arguments.DETACH_ALL),
+                applicable=options_get(Arguments.APPLICABLE),
+                attachment_type=options_get(Arguments.ATTACHMENT_TYPE),
+                attachment_path=options_get(Arguments.ATTACHMENT_PATH),
+            )
 
         if command is not None:
             command.validate()
@@ -186,7 +208,5 @@ class Command(ABC):
         """
         Used to validate a command. Should always be called before `execute`. The arg parser will catch many issues
         with options, but this is used to apply additional constraints that the arg parser can't currently handle.
-        One example is that a catalog cannot be created with the `s3` storage type without a `--role-arn` option, but
-        one can be created without this flag if it's using the `gcs` storage type.
         """
         raise Exception("`validate` called on abstract `Command`")

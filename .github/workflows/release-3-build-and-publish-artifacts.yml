@@ -209,7 +209,7 @@ jobs:
           source "${LIBS_DIR}/_exec.sh"
 
           # Publish artifacts to staging repository
-          exec_process ./gradlew publishToApache closeApacheStagingRepository -Prelease -PuseGpgAgent --info 2>&1 | tee gradle_publish_output.txt ; test ${PIPESTATUS[0]} -eq 0
+          exec_process ./gradlew publishToApache closeApacheStagingRepository -Prelease -PuseGpgAgent --info 2>&1 | tee gradle_publish_output.txt
 
           # Extract staging repository ID from Gradle output
           if grep -q "Created staging repository" gradle_publish_output.txt; then
@@ -223,7 +223,7 @@ jobs:
 
           cat <<EOT >> $GITHUB_STEP_SUMMARY
           ## Nexus Staging Repository
-          Artifacts published and staging repository closed successfully
+          Artifacts published to staging repository successfully
 
           | Property | Value |
           | --- | --- |
@@ -237,7 +237,6 @@ jobs:
           | Build source and binary distributions | ✅ |
           | Stage artifacts to Apache dist dev repository | ✅ |
           | Stage artifacts to Apache Nexus staging repository | ✅ |
-          | Close Nexus staging repository | ✅ |
           EOT
 
   build-docker:

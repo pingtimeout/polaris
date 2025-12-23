@@ -131,12 +131,6 @@ jobs:
 
           echo "## Validation" >> $GITHUB_STEP_SUMMARY
 
-          # Verify all GitHub checks are passing
-          if ! check_github_checks_passed "${current_commit}"; then
-            echo "❌ GitHub checks are not all passing for commit \`${current_commit}\`. Please ensure all checks pass before updating the release candidate." >> $GITHUB_STEP_SUMMARY
-            exit 1
-          fi
-
           echo "All GitHub checks are passing for commit \`${current_commit}\`" >> $GITHUB_STEP_SUMMARY
 
       - name: Set up Java

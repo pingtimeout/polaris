@@ -146,6 +146,9 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
+      - name: Prepare Gradle build cache
+        uses: ./.github/actions/ci-incr-build-cache-prepare
+
       - name: Install Subversion
         run: |
           sudo apt-get update
@@ -280,6 +283,9 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '21'
+
+      - name: Prepare Gradle build cache
+        uses: ./.github/actions/ci-incr-build-cache-prepare
 
       - name: Build Polaris Server Docker image
         run: |

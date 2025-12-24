@@ -274,6 +274,9 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
+      - name: Prepare Gradle build cache
+        uses: ./.github/actions/ci-incr-build-cache-prepare
+
       - name: Log in to Docker Hub
         if: env.DRY_RUN == '0'
         run: |

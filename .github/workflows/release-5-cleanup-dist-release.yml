@@ -1,0 +1,232 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+name: Release - 5 - Cleanup dist release
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run mode (check to enable, uncheck to perform actual operations)'
+        required: false
+        type: boolean
+        default: true
+
+jobs:
+  publish-release:
+    name: Release - 5 - Cleanup dist release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+        with:
+          # Fetch full history for proper branch operations
+          fetch-depth: 0
+          # Use a token with write permissions
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup test environment
+        uses: ./.github/actions/setup-test-env
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Set up environment variables
+        run: |
+          echo "RELEASEY_DIR=$(pwd)/releasey" >> $GITHUB_ENV
+          echo "LIBS_DIR=$(pwd)/releasey/libs" >> $GITHUB_ENV
+
+          echo "## Mode" >> $GITHUB_STEP_SUMMARY
+          if [[ "${{ github.event.inputs.dry_run }}" == "true" ]]; then
+            echo "DRY_RUN=1" >> $GITHUB_ENV
+            echo "‼️ DRY_RUN mode enabled - No actual changes will be made" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "DRY_RUN=0" >> $GITHUB_ENV
+            echo "DRY_RUN mode disabled - Performing actual operations" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          # Validate staging repository ID parameter
+          staging_repo_id="${{ github.event.inputs.staging_repository_id }}"
+          if [[ -z "${staging_repo_id}" ]]; then
+            echo "❌ Staging repository ID is required but not provided." >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+          echo "STAGING_REPOSITORY_ID=${staging_repo_id}" >> $GITHUB_ENV
+
+      - name: Install Subversion
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y subversion
+
+      - name: Auto-determine release parameters from branch and Git state
+        run: |
+          source "${LIBS_DIR}/_version.sh"
+
+          echo "## Parameters" >> $GITHUB_STEP_SUMMARY
+
+          # Extract the ref name from github.ref
+          # github.ref format: refs/heads/branch-name or refs/tags/tag-name
+          ref="${{ github.ref }}"
+
+          if [[ "${ref}" =~ ^refs/heads/release/(.+)$ ]]; then
+            # Running from a release branch
+            branch_version="${BASH_REMATCH[1]}"
+            current_branch="release/${branch_version}"
+          else
+            echo "❌ This workflow must be run from a release branch (release/major.minor.x)." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Current ref: \`${ref}\`" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Please select a release branch (e.g., \`release/1.0.x\`) from the 'Use workflow from' dropdown in the GitHub UI." >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+          # Validate branch version format and extract components
+          if ! validate_and_extract_branch_version "${branch_version}"; then
+            echo "❌ Invalid release branch version format: \`${branch_version}\`. Expected format: major.minor.x." >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+          # Find the patch number for this major.minor version by looking at existing tags
+          # Note: find_next_patch_number returns the current patch if no final tag exists,
+          # which is exactly what we need for publishing (we publish from an RC that has no final tag yet)
+          find_next_patch_number "${major}" "${minor}"
+
+          # Build the version string for the patch with RC tags
+          version_without_rc="${major}.${minor}.${patch}-incubating"
+
+          # Find the latest RC tag for this version
+          find_next_rc_number "${version_without_rc}"
+          latest_rc=$((rc_number - 1))
+
+          if [[ ${latest_rc} -lt 0 ]]; then
+            echo "❌ No RC tags found for version \`${version_without_rc}\`. Expected at least one RC to be created before publishing a release." >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+          rc_tag="apache-polaris-${version_without_rc}-rc${latest_rc}"
+
+          # Verify the RC tag exists
+          if ! git rev-parse "${rc_tag}" >/dev/null 2>&1; then
+            echo "❌ RC tag \`${rc_tag}\` does not exist in repository." >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+          # Verify that current HEAD is at the RC tag commit
+          rc_commit=$(git rev-parse "${rc_tag}")
+          current_commit=$(git rev-parse HEAD)
+
+          if [[ "${current_commit}" != "${rc_commit}" ]]; then
+            echo "❌ Current HEAD (\`${current_commit}\`) does not match RC tag \`${rc_tag}\` (\`${rc_commit}\`)." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "This means that some commits have been made on the release branch after the last RC was created." >> $GITHUB_STEP_SUMMARY
+            echo "You should not publish a release from a branch that has received additional commits after the last RC was created." >> $GITHUB_STEP_SUMMARY
+            echo "Either remove the commits from the release branch so that it points to the last RC that was voted on, or create a new RC from the current state of the branch." >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+          echo "✅ Current HEAD matches RC tag \`${rc_tag}\`" >> $GITHUB_STEP_SUMMARY
+
+          # Create final release tag name
+          final_release_tag="apache-polaris-${version_without_rc}"
+
+          # Check if final release tag already exists
+          if git rev-parse "${final_release_tag}" >/dev/null 2>&1; then
+            echo "❌ Final release tag \`${final_release_tag}\` already exists. This release may have already been published." >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+          # Export variables for next steps
+          echo "version_without_rc=${version_without_rc}" >> $GITHUB_ENV
+          echo "rc_tag=${rc_tag}" >> $GITHUB_ENV
+          echo "final_release_tag=${final_release_tag}" >> $GITHUB_ENV
+          echo "release_branch=${current_branch}" >> $GITHUB_ENV
+
+          cat <<EOT >> $GITHUB_STEP_SUMMARY
+          | Parameter | Value |
+          | --- | --- |
+          | Version | \`${version_without_rc}\` |
+          | RC tag to promote | \`${rc_tag}\` |
+          | Final release tag | \`${final_release_tag}\` |
+          | Release branch | \`${current_branch}\` |
+          | Staging Repository ID | \`${staging_repo_id}\` |
+          EOT
+
+      - name: Set up Helm
+        uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 # v4.3.1
+        with:
+          version: 'latest'
+
+      - name: Clean up old releases from dist release repository
+        env:
+          SVN_USERNAME: ${{ secrets.APACHE_USERNAME }}
+          SVN_PASSWORD: ${{ secrets.APACHE_PASSWORD }}
+        run: |
+          echo "::add-mask::$SVN_PASSWORD"
+
+          source "${LIBS_DIR}/_constants.sh"
+          source "${LIBS_DIR}/_exec.sh"
+
+          release_artifacts_url="${APACHE_DIST_URL}/release/incubator/polaris"
+          release_helm_url="${APACHE_DIST_URL}/release/incubator/polaris/helm-chart"
+
+          # List and remove old release artifact versions
+          old_versions=$(svn list --username "$SVN_USERNAME" --password "$SVN_PASSWORD" --non-interactive "${release_artifacts_url}" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+-incubating/$' | sed 's|/$||' | grep -v "^${version_without_rc}$" || true)
+
+          if [[ -n "${old_versions}" ]]; then
+            echo "## Old Releases Cleanup" >> $GITHUB_STEP_SUMMARY
+            echo "Removing old release versions:" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "${old_versions}" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+
+            for old_version in ${old_versions}; do
+              exec_process svn rm --username "$SVN_USERNAME" --password "$SVN_PASSWORD" --non-interactive \
+                "${release_artifacts_url}/${old_version}" \
+                -m "Remove old release ${old_version} (superseded by ${version_without_rc})"
+            done
+          else
+            echo "## Old Releases Cleanup" >> $GITHUB_STEP_SUMMARY
+            echo "No old release versions found to remove" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          # List and remove old Helm chart versions
+          old_helm_versions=$(svn list --username "$SVN_USERNAME" --password "$SVN_PASSWORD" --non-interactive "${release_helm_url}" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+-incubating/$' | sed 's|/$||' | grep -v "^${version_without_rc}$" || true)
+
+          if [[ -n "${old_helm_versions}" ]]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Removing old Helm chart versions:" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "${old_helm_versions}" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+
+            for old_helm_version in ${old_helm_versions}; do
+              exec_process svn rm --username "$SVN_USERNAME" --password "$SVN_PASSWORD" --non-interactive \
+                "${release_helm_url}/${old_helm_version}" \
+                -m "Remove old Helm chart ${old_helm_version} (superseded by ${version_without_rc})"
+            done
+          else
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "No old Helm chart versions found to remove" >> $GITHUB_STEP_SUMMARY
+          fi
